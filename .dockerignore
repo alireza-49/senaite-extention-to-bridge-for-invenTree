@@ -1,0 +1,11 @@
+.env
+.env.example
+config.yml
+config.example.yml
+n8n
+tests
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+*.sqlite3*

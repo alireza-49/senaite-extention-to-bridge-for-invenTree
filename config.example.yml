@@ -1,0 +1,72 @@
+# Copy to config.yml and adjust. Secrets come from the environment, either as
+# ${VAR} references (resolved at startup) or straight from the process env.
+
+senaite:
+  # Inside docker-compose the SENAITE container is reachable as http://senaite:8080/SENAITE
+  base_url: ${SENAITE_BASE_URL:-http://localhost:8080/SENAITE}
+  username: ${SENAITE_USER}
+  password: ${SENAITE_PASSWORD}
+  verify_ssl: true
+  # A verified analysis becomes "published" once the sample is published, so
+  # watch both states. Duplicates are removed by analysis UID.
+  trigger_states: [verified, published]
+  poll_seconds: 60
+  batch_size: 200
+  # Re-read the last N days on every poll (idempotency comes from the journal,
+  # so a wider window is safe and catches late verifications).
+  rescan_days: 7
+  # On the very first start, only analyses created after now are consumed.
+  # Set this to e.g. 30 to backfill the last 30 days on purpose.
+  initial_lookback_days: 0
+
+inventree:
+  base_url: ${INVENTREE_BASE_URL:-https://inventory.example.org}
+  token: ${INVENTREE_TOKEN}
+  verify_ssl: true
+
+# One entry per consumable profile. `keywords` are matched as case-insensitive
+# substrings against the analysis keyword, `sample_types` must match the
+# sample type title exactly (both lists mean "any" when left out).
+rules:
+  - id: microbiology-tpc
+    senaite:
+      keywords: ["Total Plate Count", "TPC"]
+      sample_types: ["water"]
+    consume:
+      - {part_ipn: "PETRI-90", quantity: 2}
+      - {part_ipn: "PCA-MEDIUM", quantity: 50, location: "Micro Lab"}
+
+  # Example without a sample type filter: any coliform analysis.
+  - id: microbiology-coliform
+    senaite:
+      keywords: ["Coliform"]
+    consume:
+      - {part_ipn: "PETRI-90", quantity: 1}
+
+low_stock:
+  enabled: true
+  poll_seconds: 300
+  repeat_after_hours: 24
+
+notify:
+  telegram:
+    token: ${TELEGRAM_BOT_TOKEN:-}
+    chat_ids: ["${TELEGRAM_CHAT_ID:-}"]
+  # email:
+  #   host: smtp.example.org
+  #   port: 587
+  #   user: lab@example.org
+  #   password: ${SMTP_PASSWORD:-}
+  #   from: lab@example.org
+  #   to: ["responsible@example.org"]
+  #   tls: true
+  # Optional n8n (or any) webhook; gets {subject, text, payload}.
+  webhook_url: ${N8N_WEBHOOK_URL:-}
+
+run:
+  dry_run: false
+  journal_path: /data/bridge.sqlite3
+  http_host: 0.0.0.0
+  http_port: 8099
+  # Bearer token for POST /jobs/*; the endpoint is disabled when empty.
+  http_token: ${BRIDGE_TOKEN:-}

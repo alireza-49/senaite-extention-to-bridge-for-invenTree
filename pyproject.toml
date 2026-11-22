@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "senaite-inventree-bridge"
+version = "1.0.0"
+description = "Deduct InvenTree consumables when SENAITE analyses are verified, and alert on low stock"
+requires-python = ">=3.9"
+dependencies = ["requests>=2.31", "PyYAML>=6.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+senaite-inventree-bridge = "bridge.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["bridge*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

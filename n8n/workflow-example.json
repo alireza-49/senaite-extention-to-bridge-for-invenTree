@@ -1,0 +1,86 @@
+{
+  "name": "SENAITE - InvenTree bridge (optional consumer)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "senaite-bridge",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-260, 0],
+      "webhookId": "senaite-bridge"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.subject }}",
+              "operation": "contains",
+              "value2": "کسر شد"
+            }
+          ]
+        }
+      },
+      "id": "2",
+      "name": "Is consumption",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [-40, 0]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.subject }}\n\n{{ $json.text }}",
+        "additionalFields": {}
+      },
+      "id": "3",
+      "name": "Telegram (consumption)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [200, -100],
+      "credentials": {
+        "telegramApi": {
+          "id": "REPLACE_ME",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "={{ $json.subject }}\n\n{{ $json.text }}",
+        "additionalFields": {}
+      },
+      "id": "4",
+      "name": "Telegram (alert)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [200, 100],
+      "credentials": {
+        "telegramApi": {
+          "id": "REPLACE_ME",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Is consumption", "type": "main", "index": 0 }]]
+    },
+    "Is consumption": {
+      "main": [
+        [{ "node": "Telegram (consumption)", "type": "main", "index": 0 }],
+        [{ "node": "Telegram (alert)", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "pinData": {}
+}
